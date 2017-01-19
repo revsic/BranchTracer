@@ -5,4 +5,4 @@
 
 #include <stdio.h>
 
-int BinaryPatcher(char *filename);
+BaseFileInfo* BinaryPatcher(char *filename);

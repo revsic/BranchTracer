@@ -19,6 +19,12 @@
     <Filter Include="헤더 파일\BinaryPatcher">
       <UniqueIdentifier>{c33b895e-592b-4b9a-aaf6-da14f021d38f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\debugger">
+      <UniqueIdentifier>{e36e59c2-b3b7-498a-9ab6-4105cba80e2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\debugger">
+      <UniqueIdentifier>{34b446af-68ae-4cd1-bcd3-4f1473a6b454}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -30,15 +36,18 @@
     <ClCompile Include="Utils.cpp">
       <Filter>소스 파일\BinaryPatcher</Filter>
     </ClCompile>
+    <ClCompile Include="DbgMain.cpp">
+      <Filter>소스 파일\debugger</Filter>
+    </ClCompile>
     <ClCompile Include="DataTypes.cpp">
       <Filter>소스 파일\BinaryPatcher</Filter>
+    </ClCompile>
+    <ClCompile Include="SubRoutines.cpp">
+      <Filter>소스 파일\debugger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utils.h">
-      <Filter>헤더 파일\BinaryPatcher</Filter>
-    </ClInclude>
-    <ClInclude Include="DataTypes.h">
       <Filter>헤더 파일\BinaryPatcher</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
@@ -46,6 +55,15 @@
     </ClInclude>
     <ClInclude Include="BinaryPatcher.h">
       <Filter>헤더 파일\BinaryPatcher</Filter>
+    </ClInclude>
+    <ClInclude Include="DbgMain.h">
+      <Filter>헤더 파일\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="DataTypes.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SubRoutines.h">
+      <Filter>헤더 파일\debugger</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,6 +1,8 @@
 #pragma once
 #include "stdafx.h"
 
+#include <vector>
+
 class TextSectionInfo {
 public:
 	DWORD PointerToRawData;

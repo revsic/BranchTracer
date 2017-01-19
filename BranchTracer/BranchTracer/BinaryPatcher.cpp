@@ -1,6 +1,6 @@
 #include "BinaryPatcher.h"
 
-int BinaryPatcher(char *filename) {
+BaseFileInfo* BinaryPatcher(char *filename) {
 	BaseFileInfo *bf = GetOffsetOfInstructions(filename);
 
 	DisasmInfo *disasm = bf->disasm;
@@ -29,5 +29,5 @@ int BinaryPatcher(char *filename) {
 	fwrite(exe, 1, dwSizeOfFile, fp);
 	fclose(fp);
 
-	return 0;
+	return bf;
 }
