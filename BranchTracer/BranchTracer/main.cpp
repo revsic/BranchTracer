@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 int main() {
-	char *target = "C:\\dbg\\debuggee2.exe";
-	WCHAR *wtarget = L"C:\\dbg\\debuggee2.exe";
+	char *target = "C:\\dbg\\iexplore.exe";
+	WCHAR *wtarget = L"C:\\dbg\\iexplore.exe";
 
 	BaseFileInfo* bf = BinaryPatcher(target);
 	DebugProcess(wtarget);

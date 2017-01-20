@@ -21,6 +21,27 @@ DWORD GetParentProcessId(DWORD dwProcessId) {
 	return dwParentProcessId;
 }
 
+int GetFileNameByHandle(HANDLE hFile, WCHAR *filename) {
+	WCHAR wFileName[MAX_FILE_PATH];
+	HANDLE hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 1, NULL);
+	
+	void *pMem = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 1);
+
+	GetMappedFileNameW(GetCurrentProcess(), pMem, wFileName, MAX_FILE_PATH);
+			
+	WCHAR *ptr = wcsrchr(wFileName, '\\');
+	if (ptr) {
+		wcscpy(filename, ptr + 1);
+	}
+	else {
+		wcscpy(filename, wFileName);
+	}
+
+	UnmapViewOfFile(pMem);
+	CloseHandle(hMap);
+	return 0;
+}
+
 int AppendSubProcess(DWORD dwParentProcessId, DWORD dwProcessId, ProcessInfo& info) {
 	if (info.dwProcessId == dwParentProcessId) {
 		ProcessInfo *sub = new ProcessInfo();
@@ -98,6 +119,37 @@ int ContinueProcess(DEBUG_EVENT& dbgEvent) {
 	return 0;
 }
 
-int LogBranch(DEBUG_EVENT& dbgEvent) {
+int LogBranch(DEBUG_EVENT& dbgEvent, std::vector<LibraryInfo *> libs) {
+	EXCEPTION_RECORD& record = dbgEvent.u.Exception.ExceptionRecord;
+
+	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dbgEvent.dwProcessId);
+	HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, dbgEvent.dwThreadId);
+
+	CONTEXT context;
+	context.ContextFlags = CONTEXT_ALL;
+	GetThreadContext(hThread, &context);
+
+	BYTE memory[4];
+	SIZE_T written;
+	ReadProcessMemory(hProcess, (LPCVOID)context.Rip, memory, 4, &written);
+
+	DWORD64 called = context.Rip + (*(DWORD *)memory) + 4;
+	printf("[*] branched to : %p\n", called);
+
+	for (auto iter = libs.begin(); iter != libs.end(); ++iter) {
+		DWORD64 lpBaseOfDll = (DWORD64)((*iter)->lpBaseOfDll);
+		DWORD64 lpEndOfDll = lpBaseOfDll + (*iter)->dwFileSize;
+
+		if (called >= lpBaseOfDll && called <= lpEndOfDll) {
+			printf("[*] address in %ls\n", (*iter)->wFileName);
+		}
+
+		break;
+	}
+
+	printf("\n");
+
+	CloseHandle(hProcess);
+	CloseHandle(hThread);
 	return 0;
 }

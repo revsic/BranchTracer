@@ -59,11 +59,11 @@
     <ClInclude Include="DbgMain.h">
       <Filter>헤더 파일\debugger</Filter>
     </ClInclude>
-    <ClInclude Include="DataTypes.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="SubRoutines.h">
       <Filter>헤더 파일\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="DataTypes.h">
+      <Filter>헤더 파일\BinaryPatcher</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
