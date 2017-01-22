@@ -2,6 +2,7 @@
 #include "stdafx.h"
 
 #include <TlHelp32.h>
+#include <DbgHelp.h>
 #include <Psapi.h>
 #include <vector>
 
@@ -39,10 +40,11 @@ public:
 
 DWORD GetParentProcessId(DWORD dwProcessId);
 int GetFileNameByHandle(HANDLE hFile, WCHAR *filename);
+HMODULE GetRemoteModuleHandle(DWORD dwProcessId, WCHAR *lpModuleName);
 
 ProcessInfo* FindProcess(DWORD dwProcessId, ProcessInfo& info);
 int AppendSubProcess(DWORD dwParentProcessId, DWORD dwProcessId, ProcessInfo& info);
 int DeleteProcess(DWORD dwProcessId, ProcessInfo& info);
 
 int ContinueProcess(DEBUG_EVENT& dbgEvent);
-int LogBranch(DEBUG_EVENT& dbgEvent, std::vector<LibraryInfo *> libs);
+int LogBranch(HANDLE hSymbol, DEBUG_EVENT& dbgEvent, std::vector<LibraryInfo *> libs);

@@ -1,5 +1,21 @@
 #include "SubRoutines.h"
 
+int wcscmpi(WCHAR *a, WCHAR *b) {
+	while (*a != '\0' && *b != '\0') {
+		if (*a != *b && *a != (*b ^ 0x20)) {
+			return 1;
+		}
+
+		++a; ++b;
+	}
+
+	if (*a == '\0' && *b == '\0') {
+		return 0;
+	}
+
+	return 1;
+}
+
 DWORD GetParentProcessId(DWORD dwProcessId) {
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
@@ -28,7 +44,7 @@ int GetFileNameByHandle(HANDLE hFile, WCHAR *filename) {
 	void *pMem = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 1);
 
 	GetMappedFileNameW(GetCurrentProcess(), pMem, wFileName, MAX_FILE_PATH);
-			
+
 	WCHAR *ptr = wcsrchr(wFileName, '\\');
 	if (ptr) {
 		wcscpy(filename, ptr + 1);
@@ -40,6 +56,25 @@ int GetFileNameByHandle(HANDLE hFile, WCHAR *filename) {
 	UnmapViewOfFile(pMem);
 	CloseHandle(hMap);
 	return 0;
+}
+
+HMODULE GetRemoteModuleHandle(DWORD dwProcessId, WCHAR *lpModuleName) {
+	HMODULE hModule = NULL;
+	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, dwProcessId);
+
+	MODULEENTRY32W entry;
+	entry.dwSize = sizeof(entry);
+
+	if (Module32FirstW(hSnapshot, &entry)) {
+		do {
+			if (!wcscmpi(entry.szModule, lpModuleName)) {
+				hModule = entry.hModule;
+				break;
+			}
+		} while (Module32NextW(hSnapshot, &entry));
+	}
+
+	return hModule;
 }
 
 int AppendSubProcess(DWORD dwParentProcessId, DWORD dwProcessId, ProcessInfo& info) {
@@ -100,56 +135,102 @@ int ContinueProcess(DEBUG_EVENT& dbgEvent) {
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dbgEvent.dwProcessId);
 	HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, dbgEvent.dwThreadId);
 
+	BYTE read = 0;
 	BYTE call = 0xE8;
 	SIZE_T written = 0;
 
 	EXCEPTION_RECORD& record = dbgEvent.u.Exception.ExceptionRecord;
+	ReadProcessMemory(hProcess, (LPCVOID)((DWORD64)record.ExceptionAddress + 1), &read, 1, &written);
+
+	if (read == 0x15) {
+		call = 0xFF;
+	}
+
 	WriteProcessMemory(hProcess, record.ExceptionAddress, &call, 1, &written);
 
 	CONTEXT context;
 	context.ContextFlags = CONTEXT_ALL;
 	GetThreadContext(hThread, &context);
 
+#ifdef _WIN64
 	context.Rip -= 1;
+#else
+	context.Eip -= 1;
+#endif
+
 	SetThreadContext(hThread, &context);
 
 	CloseHandle(hProcess);
 	CloseHandle(hThread);
-
 	return 0;
 }
 
-int LogBranch(DEBUG_EVENT& dbgEvent, std::vector<LibraryInfo *> libs) {
+int LogBranch(HANDLE hSymbol, DEBUG_EVENT& dbgEvent, std::vector<LibraryInfo *> libs) {
 	EXCEPTION_RECORD& record = dbgEvent.u.Exception.ExceptionRecord;
 
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dbgEvent.dwProcessId);
-	HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, dbgEvent.dwThreadId);
 
-	CONTEXT context;
-	context.ContextFlags = CONTEXT_ALL;
-	GetThreadContext(hThread, &context);
-
-	BYTE memory[4];
+	BYTE memory[8];
 	SIZE_T written;
-	ReadProcessMemory(hProcess, (LPCVOID)context.Rip, memory, 4, &written);
 
-	DWORD64 called = context.Rip + (*(DWORD *)memory) + 4;
-	printf("[*] branched to : %p\n", called);
+	ReadProcessMemory(hProcess, (LPCVOID)((DWORD64)record.ExceptionAddress + 1), memory, 5, &written);
+	DWORD64 called = 0;
 
-	for (auto iter = libs.begin(); iter != libs.end(); ++iter) {
-		DWORD64 lpBaseOfDll = (DWORD64)((*iter)->lpBaseOfDll);
-		DWORD64 lpEndOfDll = lpBaseOfDll + (*iter)->dwFileSize;
+	if (memory[0] == 0x15) {
+		called = (*(DWORD *)(memory + 1));
+#ifdef _WIN64
+		DWORD64 dwDisplacement;
 
-		if (called >= lpBaseOfDll && called <= lpEndOfDll) {
-			printf("[*] address in %ls\n", (*iter)->wFileName);
+		ReadProcessMemory(hProcess, (LPCVOID)((DWORD64)record.ExceptionAddress + called + 6), memory, 8, &written);
+		called = *(DWORD64 *)(memory);
+#else
+		DWORD dwDisplacement;
+
+		ReadProcessMemory(hProcess, (LPCVOID)called, memory, 4, &written);
+		called = *(DWORD *)memory;
+#endif
+
+		WCHAR *wLibName = L"None";
+
+		for (auto iter = libs.begin(); iter != libs.end(); ++iter) {
+			if ((*iter)->dwFileSize == 0) {
+				HMODULE hModule = GetRemoteModuleHandle(dbgEvent.dwProcessId, (*iter)->wFileName);
+				if (hModule) {
+					MODULEINFO modinfo;
+					GetModuleInformation(hProcess, hModule, &modinfo, sizeof(modinfo));
+
+					(*iter)->dwFileSize = modinfo.SizeOfImage;
+				}
+			}
+
+			DWORD64 lpBaseOfDll = (DWORD64)((*iter)->lpBaseOfDll);
+			DWORD64 lpEndOfDll = lpBaseOfDll + (*iter)->dwFileSize;
+
+			if (called >= lpBaseOfDll && called <= lpEndOfDll) {
+				wLibName = (*iter)->wFileName;
+				break;
+			}
 		}
 
-		break;
+		IMAGEHLP_SYMBOL *pSymbol;
+		pSymbol = (IMAGEHLP_SYMBOL *)new BYTE[sizeof(IMAGEHLP_SYMBOL) + MAX_SYM_NAME];
+
+		memset(pSymbol, 0, sizeof(IMAGEHLP_SYMBOL) + MAX_SYM_NAME);
+		pSymbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
+		pSymbol->MaxNameLength = MAX_SYM_NAME;
+
+		if (SymGetSymFromAddr(hSymbol, called, &dwDisplacement, pSymbol)) {
+			printf("%p -> %ls.%s\n", record.ExceptionAddress, wLibName, pSymbol->Name);
+		}
+		else {
+			printf("%p -> %ls.%p\n", record.ExceptionAddress, wLibName, called);
+		}
+	}
+	else {
+		called = (DWORD64)record.ExceptionAddress + (*(DWORD *)memory) + 5;
+		printf("%p -> %p\n", record.ExceptionAddress, called);
 	}
 
-	printf("\n");
-
 	CloseHandle(hProcess);
-	CloseHandle(hThread);
 	return 0;
 }

@@ -1,6 +1,6 @@
 #include "DbgMain.h"
 
-int DebugProcess(WCHAR* filename) {
+int DebugProcess(WCHAR* filename, bool isLivePatch) {
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 
@@ -8,6 +8,11 @@ int DebugProcess(WCHAR* filename) {
 	memset(&pi, 0, sizeof(pi));
 
 	CreateProcessW(filename, NULL, NULL, NULL, FALSE, CREATE_NEW_CONSOLE | DEBUG_PROCESS, NULL, NULL, &si, &pi);
+
+	if (!SymInitialize(pi.hProcess, NULL, FALSE)) {
+		printf("[*] Symbol init fail..\n");
+		return 1;
+	}
 
 	DEBUG_EVENT dbgEvent;
 	bool dbgContinue = true;
@@ -24,8 +29,6 @@ int DebugProcess(WCHAR* filename) {
 
 		switch (dbgEvent.dwDebugEventCode) {
 		case CREATE_PROCESS_DEBUG_EVENT:
-			printf("[*] Process Created : %d\n\n", dbgEvent.dwProcessId);
-
 			if (proc.dwProcessId != dbgEvent.dwProcessId) {
 				DWORD dwParentProcessId = GetParentProcessId(dbgEvent.dwProcessId);
 				AppendSubProcess(dwParentProcessId, dbgEvent.dwProcessId, proc);
@@ -33,8 +36,6 @@ int DebugProcess(WCHAR* filename) {
 			break;
 
 		case EXIT_PROCESS_DEBUG_EVENT:
-			printf("[*] Process Exited : %d\n\n", dbgEvent.dwProcessId);
-
 			if (proc.dwProcessId == dbgEvent.dwProcessId) {
 				dbgContinue = false;
 			}
@@ -51,15 +52,16 @@ int DebugProcess(WCHAR* filename) {
 			lib->lpBaseOfDll = info.lpBaseOfDll;
 			GetFileNameByHandle(info.hFile, lib->wFileName);
 
-			DWORD dwFileSizeHi = 0;
-			DWORD dwFileSizeLo = GetFileSize(info.hFile, &dwFileSizeHi);
-			lib->dwFileSize = (dwFileSizeHi << 32) + dwFileSizeLo;
+			char name[MAX_FILE_PATH];
+			sprintf(name, "%ls", lib->wFileName);
 
-			printf("[*] Load Library : %ls\n", lib->wFileName);
-			printf("[*] library addr : %p\n\n", lib->lpBaseOfDll);
+			if (!SymLoadModule(pi.hProcess, NULL, name, 0, (DWORD64)info.lpBaseOfDll, 0)) {
+				if (GetLastError()) {
+					printf("[*] Symbol load err : %s\n", name);
+				}
+			}
 
 			libs.push_back(lib);
-
 			break;
 		}
 
@@ -74,8 +76,7 @@ int DebugProcess(WCHAR* filename) {
 			);
 
 			if (lib != libs.end()) {
-				printf("[*] Unload Library : %ls\n", (*lib)->wFileName);
-				printf("[*] library addr : %p\n\n", (*lib)->lpBaseOfDll);
+				libs.erase(lib);
 			}
 
 			break;
@@ -86,24 +87,24 @@ int DebugProcess(WCHAR* filename) {
 			EXCEPTION_RECORD& record = dbgEvent.u.Exception.ExceptionRecord;
 
 			if (record.ExceptionCode == EXCEPTION_BREAKPOINT) {
-				printf("[*] Exception occured : pid - %d , tid - %d\n", dbgEvent.dwProcessId, dbgEvent.dwThreadId);
-
 				ProcessInfo* info = FindProcess(dbgEvent.dwProcessId, proc);
 				if (info->isInitBreakpoint) {
-					printf("[*] initial bp : %p\n\n", record.ExceptionAddress);
+					if (isLivePatch) {
+						LivePatcher(dbgEvent.dwProcessId);
+					}
 
 					info->isInitBreakpoint = false;
 				}
 				else {
-					printf("[*] branch occured : %p\n", record.ExceptionAddress);
-
-					LogBranch(dbgEvent, libs);
+					LogBranch(pi.hProcess, dbgEvent, libs);
 					ContinueProcess(dbgEvent);
 				}
 			}
 			else {
 				printf("[*] Unexpected Exception Occured..\n");
-				return 1;
+				printf("[*] Exception Code : %p : %p\n", record.ExceptionCode, record.ExceptionAddress);
+
+				dbgContinue = false;
 			}
 			break;
 		}
@@ -115,5 +116,12 @@ int DebugProcess(WCHAR* filename) {
 		ContinueDebugEvent(dbgEvent.dwProcessId, dbgEvent.dwThreadId, status);
 	}
 
+	for (auto iter = libs.begin(); iter != libs.end(); ++iter) {
+		delete *iter;
+	}
+
+	SymCleanup(pi.hProcess);
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
 	return 0;
 }

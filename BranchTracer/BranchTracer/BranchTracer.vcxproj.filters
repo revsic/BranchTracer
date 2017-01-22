@@ -25,6 +25,12 @@
     <Filter Include="헤더 파일\debugger">
       <UniqueIdentifier>{34b446af-68ae-4cd1-bcd3-4f1473a6b454}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\LivePatcher">
+      <UniqueIdentifier>{832d51f0-cd10-44d4-9aff-ecad5725c881}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\LivePatcher">
+      <UniqueIdentifier>{7134d4bb-57c3-4996-b6aa-0f8a06e45970}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -45,6 +51,9 @@
     <ClCompile Include="SubRoutines.cpp">
       <Filter>소스 파일\debugger</Filter>
     </ClCompile>
+    <ClCompile Include="LivePatcher.cpp">
+      <Filter>소스 파일\LivePatcher</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utils.h">
@@ -64,6 +73,9 @@
     </ClInclude>
     <ClInclude Include="DataTypes.h">
       <Filter>헤더 파일\BinaryPatcher</Filter>
+    </ClInclude>
+    <ClInclude Include="LivePatcher.h">
+      <Filter>헤더 파일\LivePatcher</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

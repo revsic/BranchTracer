@@ -124,6 +124,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Dbghelp.lib;lib\distorm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -141,13 +142,14 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Dbghelp.lib;lib\distorm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dbghelp.lib;lib\distorm64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BinaryPatcher.cpp" />
     <ClCompile Include="DataTypes.cpp" />
     <ClCompile Include="DbgMain.cpp" />
+    <ClCompile Include="LivePatcher.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SubRoutines.cpp" />
     <ClCompile Include="Utils.cpp" />
@@ -156,6 +158,7 @@
     <ClInclude Include="BinaryPatcher.h" />
     <ClInclude Include="DataTypes.h" />
     <ClInclude Include="DbgMain.h" />
+    <ClInclude Include="LivePatcher.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="SubRoutines.h" />
     <ClInclude Include="Utils.h" />

@@ -13,8 +13,8 @@ DWORD GetFileSize(_In_ FILE *fp) {
 }
 
 
-DWORD GetTextSectionInfo(_In_ BYTE *buffer, _Out_  TextSectionInfo *info) {
-	PIMAGE_NT_HEADERS64 pNtHdr = ImageNtHeader(buffer);
+int GetTextSectionInfo(_In_ BYTE *buffer, _Out_  TextSectionInfo *info) {
+	PIMAGE_NT_HEADERS pNtHdr = ImageNtHeader(buffer);
 	PIMAGE_SECTION_HEADER pSectionHdr = (PIMAGE_SECTION_HEADER)(pNtHdr + 1);
 
 	DWORD dwNumberOfSections = pNtHdr->FileHeader.NumberOfSections;
@@ -48,7 +48,12 @@ BaseFileInfo* GetOffsetOfInstructions(_In_ char *filename) {
 
 	_OffsetType dOffset = 0;
 
+#ifdef _WIN64
 	_DecodeType dt = Decode64Bits;
+#else
+	_DecodeType dt = Decode32Bits;
+#endif
+
 	_DecodedInst dInsts[MAX_INSTRUCTIONS];
 
 	UINT uInstCount = 0;

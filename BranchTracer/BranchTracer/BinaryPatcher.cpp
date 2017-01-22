@@ -20,7 +20,10 @@ BaseFileInfo* BinaryPatcher(char *filename) {
 	for (int i = 0; i < disasm->SizeOfOffsets; ++i) {
 		DWORD opcode = entry + disasm->Offsets[i];
 
-		if (exe[opcode] == 0xE8) {
+		if (exe[opcode] == 0xE8 && exe[opcode + 1] != 0x15) {
+			exe[opcode] = 0xCC;
+		}
+		else if (exe[opcode] == 0xFF && exe[opcode + 1] == 0x15) {
 			exe[opcode] = 0xCC;
 		}
 	}
@@ -30,4 +33,39 @@ BaseFileInfo* BinaryPatcher(char *filename) {
 	fclose(fp);
 
 	return bf;
+}
+
+int RevertBinary(char *filename, BaseFileInfo* bf) {
+	DisasmInfo *disasm = bf->disasm;
+	TextSectionInfo *info = bf->process;
+
+	FILE *fp = fopen(filename, "rb");
+
+	fseek(fp, 0, SEEK_END);
+	DWORD dwSizeOfFile = ftell(fp);
+
+	BYTE *exe = new BYTE[dwSizeOfFile];
+	fseek(fp, 0, SEEK_SET);
+	fread(exe, 1, dwSizeOfFile, fp);
+	fclose(fp);
+
+	DWORD entry = info->PointerToRawData;
+	for (int i = 0; i < disasm->SizeOfOffsets; ++i) {
+		DWORD opcode = entry + disasm->Offsets[i];
+
+		if (exe[opcode] == 0xCC) {
+			if (exe[opcode + 1] == 0x15) {
+				exe[opcode] = 0xFF;
+			}
+			else {
+				exe[opcode] = 0xE8;
+			}
+		}
+	}
+
+	fp = fopen(filename, "wb");
+	fwrite(exe, 1, dwSizeOfFile, fp);
+	fclose(fp);
+
+	return 0;
 }
