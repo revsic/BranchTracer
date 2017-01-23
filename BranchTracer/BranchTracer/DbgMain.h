@@ -1,9 +1,11 @@
 #pragma once
 #include "stdafx.h"
-#include "SubRoutines.h"
 #include "LivePatcher.h"
+#include "WindowsHelp.h"
+#include "ProcessUtils.h"
 
 #include <Psapi.h>
+#include <DbgHelp.h>
 #include <algorithm>
 
-int DebugProcess(WCHAR* filename, bool isLivePatch);
+int DebugProcess(WCHAR* filename);

@@ -2,4 +2,4 @@
 
 #include <Windows.h>
 
-#define DBG(i) printf("dbg event : %d\n", i);
+#define DBG(i) printf("dbg event : %p\n", i);

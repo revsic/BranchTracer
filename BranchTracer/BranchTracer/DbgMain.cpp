@@ -1,6 +1,6 @@
 #include "DbgMain.h"
 
-int DebugProcess(WCHAR* filename, bool isLivePatch) {
+int DebugProcess(WCHAR* filename) {
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 
@@ -89,9 +89,7 @@ int DebugProcess(WCHAR* filename, bool isLivePatch) {
 			if (record.ExceptionCode == EXCEPTION_BREAKPOINT) {
 				ProcessInfo* info = FindProcess(dbgEvent.dwProcessId, proc);
 				if (info->isInitBreakpoint) {
-					if (isLivePatch) {
-						LivePatcher(dbgEvent.dwProcessId);
-					}
+					LivePatcher(dbgEvent.dwProcessId);
 
 					info->isInitBreakpoint = false;
 				}
@@ -102,7 +100,21 @@ int DebugProcess(WCHAR* filename, bool isLivePatch) {
 			}
 			else {
 				printf("[*] Unexpected Exception Occured..\n");
-				printf("[*] Exception Code : %p : %p\n", record.ExceptionCode, record.ExceptionAddress);
+
+				DWORD64 called = (DWORD64)record.ExceptionAddress;
+					
+				WCHAR *wLibName = filename;
+				for (auto iter = libs.begin(); iter != libs.end(); ++iter) {
+					DWORD64 lpBaseOfDll = (DWORD64)((*iter)->lpBaseOfDll);
+					DWORD64 lpEndOfDll = lpBaseOfDll + (*iter)->dwFileSize;
+
+					if (called >= lpBaseOfDll && called <= lpEndOfDll) {
+						wLibName = (*iter)->wFileName;
+						break;
+					}
+				}
+
+				printf("[*] Exception Code : %p : %ls.%p\n", record.ExceptionCode, wLibName, called);
 
 				dbgContinue = false;
 			}
