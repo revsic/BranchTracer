@@ -17,28 +17,28 @@
 #ifdef _WIN64
 typedef DWORD64 CDWORD;
 
-#define CustomAx Rax
-#define CustomCx Rcx
-#define CustomDx Rdx
-#define CustomBx Rbx
-#define CustomSp Rsp
-#define CustomBp Rbp
-#define CustomSi Rsi
-#define CustomDi Rdi
-#define CustomIp Rip
+#define RegisterAx Rax
+#define RegisterCx Rcx
+#define RegisterDx Rdx
+#define RegisterBx Rbx
+#define RegisterSp Rsp
+#define RegisterBp Rbp
+#define RegisterSi Rsi
+#define RegisterDi Rdi
+#define RegisterIp Rip
 
 #else
 typedef DWORD CDWORD;
 
-#define CustomAx Eax
-#define CustomCx Ecx
-#define CustomDx Edx
-#define CustomBx Ebx
-#define CustomSp Esp
-#define CustomBp Ebp
-#define CustomSi Esi
-#define CustomDi Edi
-#define CustomIp Eip
+#define RegisterAx Eax
+#define RegisterCx Ecx
+#define RegisterDx Edx
+#define RegisterBx Ebx
+#define RegisterSp Esp
+#define RegisterBp Ebp
+#define RegisterSi Esi
+#define RegisterDi Edi
+#define RegisterIp Eip
 
 #endif
 

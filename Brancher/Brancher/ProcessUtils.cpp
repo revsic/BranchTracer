@@ -87,7 +87,7 @@ int GetModuleNameByAddr(CDWORD dwAddress, WCHAR *name) {
 
 		dwProcessId = GetCurrentProcessId();
 		hProcess = GetCurrentProcess();
-		SymInitialize(hProcess, NULL, FALSE);
+		SymInitialize(hProcess, NULL, TRUE);
 	}
 
 	name[0] = '\0';

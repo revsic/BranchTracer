@@ -44,20 +44,24 @@ long WINAPI BranchHandler(PEXCEPTION_POINTERS ExceptionInfo) {
 					if (!GetModuleNameByAddr(called, wModuleName)) {
 						WCHAR wSymbolName[MAX_SYM_NAME];
 						if (!GetSymolName(called, wSymbolName)) {
-							printf("%p -> %ls :: %ls\n", record->ExceptionAddress, wModuleName, wSymbolName);
+							printf("+%p,%p,%ls,%ls\n", record->ExceptionAddress, called, wModuleName, wSymbolName);
 						}
 						else {
-							printf("%p -> %ls :: %p\n", record->ExceptionAddress, wModuleName, called);
+							printf("+%p,%p,%ls,\n", record->ExceptionAddress, called, wModuleName);
 						}
 					}
 					else {
-						printf("%p -> %p\n", record->ExceptionAddress, wModuleName, called);
+						printf("+%p,%p,,\n", record->ExceptionAddress, called);
 					}
 
 					SetBreakPoint(next);
 					isBreakPointSet = true;
 				}
 			}
+		}
+		else if (opc[0] == 0xE8) {
+			CDWORD called = context->RegisterIp + *(long *)&opc[1] + 5;
+			printf("+%p,%p,,\n", record->ExceptionAddress, called);
 		}
 
 		if (!isBreakPointSet) {

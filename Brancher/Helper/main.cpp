@@ -18,13 +18,12 @@ int InjectFunction(PPARAM param) {
 
 int EndOfFunction() { return 0; }
 
-int wmain(int argc, wchar_t *argv[]) {
+int main(int argc, char *argv[]) {
+	WCHAR *target = L"C:\\dbg\\sample.exe";
 #ifdef _WIN64
-	WCHAR *target = L"C:\\Program Files\\Internet Explorer\\iexplore.exe";
-	WCHAR *lib = L"C:\\Users\\revsic\\Documents\\Visual Studio 2015\\Projects\\BranchTracer\\Brancher\\x64\\Release\\Brancher.dll";
+	WCHAR *lib = L"C:\\dbg\\Brancher64.dll";
 #else
-	WCHAR *target = L"C:\\Program Files (x86)\\Internet Explorer\\iexplore.exe";
-	WCHAR *lib = L"C:\\Users\\revsic\\Documents\\Visual Studio 2015\\Projects\\BranchTracer\\Brancher\\Release\\Brancher.dll";
+	WCHAR *lib = L"C:\\dbg\\Brancher32.dll";
 #endif
 
 	STARTUPINFO si;
