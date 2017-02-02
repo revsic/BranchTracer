@@ -64,7 +64,7 @@ int GetTextSectionAddress(CDWORD *StartOfTextSection, CDWORD *EndOfTextSection) 
 	CDWORD EntryPoint = pNtHdr->OptionalHeader.AddressOfEntryPoint;
 
 	DWORD NumberOfSections = pNtHdr->FileHeader.NumberOfSections;
-	for (int i = 0; i < NumberOfSections; ++i) {
+	for (DWORD i = 0; i < NumberOfSections; ++i) {
 		CDWORD start = pSectionHdr->VirtualAddress;
 		CDWORD end = start + pSectionHdr->SizeOfRawData;
 
@@ -81,7 +81,7 @@ int GetTextSectionAddress(CDWORD *StartOfTextSection, CDWORD *EndOfTextSection) 
 	return 0;
 }
 
-int GetModuleNameByAddr(CDWORD dwAddress, WCHAR *name) {
+int GetModuleNameByAddr(CDWORD dwAddress, WCHAR *wName, SIZE_T size) {
 	if (isValueUnset) {
 		isValueUnset = false;
 
@@ -90,7 +90,7 @@ int GetModuleNameByAddr(CDWORD dwAddress, WCHAR *name) {
 		SymInitialize(hProcess, NULL, TRUE);
 	}
 
-	name[0] = '\0';
+	wName[0] = '\0';
 	int ret = 1;
 
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, dwProcessId);
@@ -106,10 +106,10 @@ int GetModuleNameByAddr(CDWORD dwAddress, WCHAR *name) {
 			CDWORD end = start + modinfo.SizeOfImage;
 
 			if (dwAddress >= start && dwAddress <= end) {
-				wcscpy(name, entry.szModule);
+				StringCbCopyW(wName, size, entry.szModule);
 				
 				char name[MAX_FILE_PATH];
-				snprintf(name, MAX_FILE_PATH, "%ls", name);
+				StringCbPrintfA(name, MAX_FILE_PATH, "%ws", wName);
 
 				if (SymLoadModule(hProcess, NULL, name, 0, (CDWORD)modinfo.lpBaseOfDll, 0) || !GetLastError()) {
 					ret = 0;
@@ -124,7 +124,7 @@ int GetModuleNameByAddr(CDWORD dwAddress, WCHAR *name) {
 	return ret;
 }
 
-int GetSymolName(CDWORD called, WCHAR *name) {
+int GetSymolName(CDWORD called, WCHAR *name, SIZE_T size) {
 	name[0] = '\0';
 	int ret = 1;
 
@@ -136,7 +136,7 @@ int GetSymolName(CDWORD called, WCHAR *name) {
 	
 	CDWORD dwDisplacement;
 	if (SymGetSymFromAddr(hProcess, called, &dwDisplacement, pSymbol)) {
-		wsprintf(name, L"%S", pSymbol->Name);
+		StringCbPrintfW(name, size, L"%S", pSymbol->Name);
 		ret = 0;
 	}
 

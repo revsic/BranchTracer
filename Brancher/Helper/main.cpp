@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #define MAX_FILE_PATH 512
-#define DBG(i) printf("%p\n", i);
 
 typedef HMODULE(WINAPI *PLOADLIBRARYW) (LPCWSTR lpLibFileName);
 
@@ -19,11 +18,21 @@ int InjectFunction(PPARAM param) {
 int EndOfFunction() { return 0; }
 
 int main(int argc, char *argv[]) {
-	WCHAR *target = L"C:\\dbg\\sample.exe";
-#ifdef _WIN64
-	WCHAR *lib = L"C:\\dbg\\Brancher64.dll";
+#ifdef DEBUG
+	#ifdef _WIN64
+		WCHAR *target = L"C:\\Program Files\\Internet Explorer\\iexplore.exe";
+		WCHAR *lib = L"C:\\Users\\revsic\\Documents\\Visual Studio 2015\\Projects\\BranchTracer\\Brancher\\x64\\Release\\Brancher.dll";
+	#else
+		WCHAR *target = L"C:\\Program Files (x86)\\Internet Explorer\\iexplore.exe";
+		WCHAR *lib = L"C:\\Users\\revsic\\Documents\\Visual Studio 2015\\Projects\\BranchTracer\\Brancher\\release\\Brancher.dll";
+	#endif
 #else
-	WCHAR *lib = L"C:\\dbg\\Brancher32.dll";
+	WCHAR *target = L"C:\\dbg\\sample.exe";
+	#ifdef _WIN64
+		WCHAR *lib = L"C:\\dbg\\Brancher64.dll";
+	#else
+		WCHAR *lib = L"C:\\dbg\\Brancher32.dll";
+	#endif
 #endif
 
 	STARTUPINFO si;
@@ -32,7 +41,7 @@ int main(int argc, char *argv[]) {
 	memset(&si, 0, sizeof(si));
 	memset(&pi, 0, sizeof(pi));
 
-	CreateProcessW(target, NULL, NULL, NULL, FALSE, CREATE_NEW_CONSOLE | CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+	CreateProcessW(target, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
 
 	HMODULE hKernel32 = LoadLibraryW(L"kernel32.dll");
 
@@ -54,6 +63,11 @@ int main(int argc, char *argv[]) {
 
 	CloseHandle(hThread);
 	ResumeThread(pi.hThread);
+
+	VirtualFreeEx(pi.hProcess, lpFunction, dwFunctionSize, MEM_RELEASE);
+	VirtualFreeEx(pi.hProcess, lpParam, sizeof(param), MEM_RELEASE);
+
+	WaitForSingleObject(pi.hProcess, INFINITE);
 
 	CloseHandle(pi.hThread);
 	CloseHandle(pi.hProcess);

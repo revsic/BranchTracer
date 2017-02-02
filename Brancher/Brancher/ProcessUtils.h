@@ -12,5 +12,5 @@ int BackupBreakPoint(LPVOID lpAddress);
 int SetBreakPointOnEntryPoint();
 int GetTextSectionAddress(CDWORD *StartOfTextSection, CDWORD *EndOfTextSection);
 
-int GetModuleNameByAddr(CDWORD dwAddress, WCHAR *name);
-int GetSymolName(CDWORD called, WCHAR *name);
+int GetModuleNameByAddr(CDWORD dwAddress, WCHAR *wName, SIZE_T size);
+int GetSymolName(CDWORD called, WCHAR *name, SIZE_T size);

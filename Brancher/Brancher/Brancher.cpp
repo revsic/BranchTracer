@@ -7,6 +7,7 @@
 #include "RawlevelHelper.h"
 
 bool isAddrUnset = true;
+HANDLE hStdOutput = NULL;
 CDWORD StartOfTextSection = NULL;
 CDWORD EndOfTextSection = NULL;
 
@@ -24,6 +25,7 @@ long WINAPI BranchHandler(PEXCEPTION_POINTERS ExceptionInfo) {
 		if (isAddrUnset) {
 			isAddrUnset = false;
 
+			hStdOutput = CreateFileW(L"C:\\dbg\\log.txt", GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 			GetTextSectionAddress(&StartOfTextSection, &EndOfTextSection);
 		}
 
@@ -40,19 +42,34 @@ long WINAPI BranchHandler(PEXCEPTION_POINTERS ExceptionInfo) {
 				CDWORD called = GetBranchingAddress(opc, context, &next);
 
 				if (called >= EndOfTextSection || called <= StartOfTextSection) {
+					WCHAR log[MAX_LOG_SIZE];
 					WCHAR wModuleName[MAX_FILE_PATH];
-					if (!GetModuleNameByAddr(called, wModuleName)) {
+					if (!GetModuleNameByAddr(called, wModuleName, MAX_FILE_PATH)) {
 						WCHAR wSymbolName[MAX_SYM_NAME];
-						if (!GetSymolName(called, wSymbolName)) {
-							printf("+%p,%p,%ls,%ls\n", record->ExceptionAddress, called, wModuleName, wSymbolName);
+						if (!GetSymolName(called, wSymbolName, MAX_SYM_NAME)) {
+							StringCbPrintfW(log, 
+											MAX_LOG_SIZE, 
+											L"+%p,%p,%s,%s\r\n", 
+											record->ExceptionAddress, 
+											called, 
+											wModuleName, 
+											wSymbolName);
 						}
 						else {
-							printf("+%p,%p,%ls,\n", record->ExceptionAddress, called, wModuleName);
+							StringCbPrintfW(log,
+											MAX_LOG_SIZE,
+											L"+%p,%p,%s\r\n",
+											record->ExceptionAddress,
+											called,
+											wModuleName);
 						}
 					}
 					else {
-						printf("+%p,%p,,\n", record->ExceptionAddress, called);
+						StringCbPrintfW(log, MAX_LOG_SIZE, L"+%p,%p,,\r\n", record->ExceptionAddress, called);
 					}
+
+					DWORD written;
+					WriteFile(hStdOutput, log, (DWORD)wcslen(log) * sizeof(WCHAR), &written, NULL);
 
 					SetBreakPoint(next);
 					isBreakPointSet = true;
@@ -61,7 +78,11 @@ long WINAPI BranchHandler(PEXCEPTION_POINTERS ExceptionInfo) {
 		}
 		else if (opc[0] == 0xE8) {
 			CDWORD called = context->RegisterIp + *(long *)&opc[1] + 5;
-			printf("+%p,%p,,\n", record->ExceptionAddress, called);
+
+			DWORD written;
+			WCHAR log[MAX_LOG_SIZE];
+			StringCbPrintfW(log, MAX_LOG_SIZE, L"+%p,%p,,\r\n", record->ExceptionAddress, called);
+			WriteFile(hStdOutput, log, (DWORD)wcslen(log) * sizeof(WCHAR), &written, NULL);
 		}
 
 		if (!isBreakPointSet) {

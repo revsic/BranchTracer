@@ -11,8 +11,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		freopen("C:\\dbg\\log.txt", "w", stdout);
-
 		AddVectoredExceptionHandler(1, BranchHandler);
 		SetBreakPointOnEntryPoint();
 		break;
