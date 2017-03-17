@@ -14,7 +14,7 @@ Branch data refers to data processed in a branching situation such as jmp and ca
 
 Brancher is a VEH-based dll-type branch tracer.
 
-VEH is a Vectored Exception Handler, a handler that can handle exceptions that occur throughout the binary. The DLL generates an EXCEPTION_BREAKPOINT, and VEH is called. The handler generates an EXCEPTION_SINGLE_STEP, checks each instruction, and logs if it is a branch.
+VEH is a Vectored Exception Handler, a handler that can handle exceptions that occur throughout the binary. The dllmain generates an EXCEPTION_BREAKPOINT, and VEH is called. The handler generates an EXCEPTION_SINGLE_STEP recursively, checks each instruction and logs if it is a branch.
 
 Despite the single step exception, the tracer is fast enough, because the dll shares memory with the target process, so it is less expensive to access memory, and VEH exception handler is used to speed up single step exception processing.
 
@@ -24,8 +24,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                        LPVOID lpReserved
 					 )
 {
-	switch (ul_reason_for_call)
-	{
+    switch (ul_reason_for_call)
+    {
     case DLL_PROCESS_ATTACH:
         AddVectoredExceptionHandler(1, BranchHandler);
         SetBreakPointOnEntryPoint();
@@ -53,7 +53,7 @@ long WINAPI BranchHandler(PEXCEPTION_POINTERS ExceptionInfo) {
 }
 ```
 
-Branch Handler The branch handler handles a single step exception and logs when the instruction is branching.
+The branch handler handles a single step exception and logs when the instruction is branching.
 
 ```cpp
 if (opc[0] == 0xFF) {
