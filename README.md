@@ -14,9 +14,9 @@ Branch data refers to data processed in a branching situation such as jmp and ca
 
 Brancher is a VEH-based dll-type branch tracer.
 
-VEH is a Vectored Exception Handler that can handle exceptions which occur throughout the binary. When dll is injected, dllmain sets an EXCEPTION_BREAKPOINT at the entry point of the target binary and add VEH as a top priority. When instruction pointer run the entry point, int3 exception occur and VEH is called. The handler parses opcode and logs if it is branch instruction. The handler sets trap flag of the EFLags register. An EXCEPTION_SINGLE_STEP will occur after the VEH returns, then the VEH is called recursively. The VEH can stepping the instruction and logs if it is branch instruction.
+VEH is a Vectored Exception Handler that can handle exceptions which occur throughout the binary. When dll is injected, dllmain sets an EXCEPTION_BREAKPOINT at the entry point of the target binary and add VEH as the first priority. When instruction pointer executes the entry point, int3 occurs and system call VEH. The handler parses opcode and logs if it is a branch instruction. The handler sets trap flag of the EFLags register. EXCEPTION_SINGLE_STEP will occur after the VEH returns, then the VEH can be called recursively. The VEH can stepping the instruction and logs if it is branch instruction.
 
-Despite the single step exception, the tracer is fast enough. Because the dll shares memory with the target process, so it is less expensive to access memory. And VEH exception handler is used to speed up single step exception processing.
+Despite the single step exception, the tracer is fast enough. Because the dll shares memory with the target process, so it is less expensive to access memory. And exception handler is used to speed up single step exception processing. In order to reduce unnecessary logging, I used a software break point when an API is called. Overwrite return address of API with int3 and run the process without trap flag.
 
 ```cpp
 BOOL APIENTRY DllMain( HMODULE hModule,
