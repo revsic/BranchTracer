@@ -2,7 +2,7 @@
 
 Implementation of Branch Tracer with C++
 
-Branch data refers to data processed in a branching situation such as jmp and call. This data is advantageous for showing its structure regardless of the polymorphism of the binary, and the branch tracer logs such branch data.
+Branch data refers to data processed in a branching situation such as jmp and call. This data is advantageous for showing the structure of binary regardless of the polymorphism. Branch tracer logs such branch data.
 
 - Brancher DLL Main - Pre process :  [dllmain.cpp](https://github.com/revsic/BranchTracer/blob/master/Brancher/Brancher/dllmain.cpp)
 - Branch Logger - VEH Handler: [Brancher.cpp](https://github.com/revsic/BranchTracer/blob/master/Brancher/Brancher/Brancher.cpp)
@@ -14,9 +14,9 @@ Branch data refers to data processed in a branching situation such as jmp and ca
 
 Brancher is a VEH-based dll-type branch tracer.
 
-VEH is a Vectored Exception Handler, a handler that can handle exceptions that occur throughout the binary. The dllmain generates an EXCEPTION_BREAKPOINT, and VEH is called. The handler generates an EXCEPTION_SINGLE_STEP recursively, checks each instruction and logs if it is a branch.
+VEH is a Vectored Exception Handler that can handle exceptions which occur throughout the binary. When dll is injected, dllmain sets an EXCEPTION_BREAKPOINT at the entry point of the target binary and add VEH as a top priority. When instruction pointer run the entry point, int3 exception occur and VEH is called. The handler parses opcode and logs if it is branch instruction. THe handler sets trap flag of the EFLags register. An EXCEPTION_SINGLE_STEP will occur after the VEH returns, then the VEH is called recursively. The VEH can stepping the instruction and logs if it is branch instruction.
 
-Despite the single step exception, the tracer is fast enough, because the dll shares memory with the target process, so it is less expensive to access memory, and VEH exception handler is used to speed up single step exception processing.
+Despite the single step exception, the tracer is fast enough. Because the dll shares memory with the target process, so it is less expensive to access memory. And VEH exception handler is used to speed up single step exception processing.
 
 ```cpp
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -80,7 +80,7 @@ if (opc[0] == 0xFF) {
 
 ## Helper
 
-Helper injects the brancher dll into the target process.
+Helper injects the Brancher dll into the target process.
 
 By waiting for the created remote thread, it helps the normal operation of the process after the veh registration and break point creation.
 
