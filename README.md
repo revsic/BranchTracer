@@ -2,7 +2,7 @@
 
 Implementation of Branch Tracer with C++
 
-Branch data refers to data processed in a branching situation such as jmp and call. This data is advantageous for showing the structure of binary regardless of the polymorphism. Branch tracer logs such branch data.
+Branch data refers to the data processed in a branching situation such as jmp and call. This data is advantageous for showing the structure of binary regardless of the polymorphism. Branch tracer logs such branch data.
 
 - Brancher DLL Main - Pre process :  [dllmain.cpp](https://github.com/revsic/BranchTracer/blob/master/Brancher/Brancher/dllmain.cpp)
 - Branch Logger - VEH Handler: [Brancher.cpp](https://github.com/revsic/BranchTracer/blob/master/Brancher/Brancher/Brancher.cpp)
@@ -14,7 +14,7 @@ Branch data refers to data processed in a branching situation such as jmp and ca
 
 Brancher is a VEH-based dll-type branch tracer.
 
-VEH is a Vectored Exception Handler that can handle exceptions which occur throughout the binary. When dll is injected, dllmain sets an EXCEPTION_BREAKPOINT at the entry point of the target binary and add VEH as the first priority. When instruction pointer executes the entry point, int3 occurs and system call VEH. The handler parses opcode and logs if it is a branch instruction. The handler sets trap flag of the EFLags register. EXCEPTION_SINGLE_STEP will occur after VEH returns, then VEH can be called recursively. VEH can stepping the instruction and logs if it is branch instruction.
+VEH is a Vectored Exception Handler that can handle exceptions which occur throughout the binary. When dll is injected, dllmain sets an EXCEPTION_BREAKPOINT at the entry point of the target binary and add VEH as the first priority exception handler. When instruction pointer executes the entry point, int3 occurs and system calls VEH. Brancher's VEH handler parses opcode and logs it, if it is a branch instruction. The handler sets trap flag of the EFLags register. EXCEPTION_SINGLE_STEP will occur after VEH returns, then VEH can be called recursively. VEH can stepping the instruction and logs it, if it is branch instruction.
 
 Despite the single step exception, the tracer is fast enough. Because the dll shares memory with the target process, so it is less expensive to access memory. And exception handler is used to process single step exception. In order to reduce unnecessary logging, I used a software break point when an API is called. Overwrite the return address of API with int3 and run the process without trap flag.
 
@@ -34,7 +34,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 }
 ```
 
-Brancher sets break point at the entry point and registers the VEH handler with first priority.
+Brancher sets break point at the entry point and adds the VEH handler with first priority.
 
 ```cpp
 long WINAPI BranchHandler(PEXCEPTION_POINTERS ExceptionInfo) {
@@ -53,7 +53,7 @@ long WINAPI BranchHandler(PEXCEPTION_POINTERS ExceptionInfo) {
 }
 ```
 
-The branch handler handles a single step exception and logs when the instruction is branching.
+The branch handler handles a single step exception and logs it when it is a branch instruction.
 
 ```cpp
 if (opc[0] == 0xFF) {
