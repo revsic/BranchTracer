@@ -1,30 +1,14 @@
 #include <Windows.h>
 #include <stdio.h>
 
-#define MAX_FILE_PATH 512
-
-typedef HMODULE(WINAPI *PLOADLIBRARYW) (LPCWSTR lpLibFileName);
-
-typedef struct {
-	PLOADLIBRARYW lpLoadLibraryW;
-	WCHAR lpLibFileName[MAX_FILE_PATH];
-} PARAM, *PPARAM;
-
-int InjectFunction(PPARAM param) {
-	(param->lpLoadLibraryW)(param->lpLibFileName);
-	return 0;
-}
-
-int EndOfFunction() { return 0; }
-
 int main(int argc, char *argv[]) {
-#ifdef DEBUG
+#ifdef _DEBUG
 	#ifdef _WIN64
 		WCHAR *target = L"C:\\Program Files\\Internet Explorer\\iexplore.exe";
-		WCHAR *lib = L"C:\\Users\\revsic\\Documents\\Visual Studio 2015\\Projects\\BranchTracer\\Brancher\\x64\\Release\\Brancher.dll";
+		WCHAR *lib = L"Y:\\Desktop\\github\\BranchTracer\\Brancher\\x64\\Debug\\Brancher.dll";
 	#else
 		WCHAR *target = L"C:\\Program Files (x86)\\Internet Explorer\\iexplore.exe";
-		WCHAR *lib = L"C:\\Users\\revsic\\Documents\\Visual Studio 2015\\Projects\\BranchTracer\\Brancher\\release\\Brancher.dll";
+		WCHAR *lib = L"Y:\\Desktop\\github\\BranchTracer\\Brancher\\x64\\Debug\\Brancher.dll";
 	#endif
 #else
 	WCHAR *target = L"C:\\dbg\\sample.exe";
@@ -44,28 +28,21 @@ int main(int argc, char *argv[]) {
 	CreateProcessW(target, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
 
 	HMODULE hKernel32 = LoadLibraryW(L"kernel32.dll");
+	LPTHREAD_START_ROUTINE lpLoadLibraryW = (LPTHREAD_START_ROUTINE)GetProcAddress(hKernel32, "LoadLibraryW");
 
-	PARAM param;
-	wcscpy(param.lpLibFileName, lib);
-	param.lpLoadLibraryW = (PLOADLIBRARYW)GetProcAddress(hKernel32, "LoadLibraryW");
-
-	DWORD64 dwFunctionSize = (DWORD64)EndOfFunction - (DWORD64)InjectFunction;
-
-	LPVOID lpFunction = VirtualAllocEx(pi.hProcess, NULL, dwFunctionSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	LPVOID lpParam = VirtualAllocEx(pi.hProcess, NULL, sizeof(param), MEM_COMMIT, PAGE_READWRITE);
+	SIZE_T dwLength = (wcslen(lib) + 1) * 2;
+	LPVOID lpLibName = VirtualAllocEx(pi.hProcess, NULL, dwLength, MEM_COMMIT, PAGE_READWRITE);
 
 	SIZE_T written;
-	WriteProcessMemory(pi.hProcess, lpParam, &param, sizeof(param), &written);
-	WriteProcessMemory(pi.hProcess, lpFunction, InjectFunction, dwFunctionSize, &written);
+	WriteProcessMemory(pi.hProcess, lpLibName, lib, dwLength, &written);
 
-	HANDLE hThread = CreateRemoteThread(pi.hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)lpFunction, lpParam, NULL, NULL);
+	HANDLE hThread = CreateRemoteThread(pi.hProcess, NULL, NULL, lpLoadLibraryW, lpLibName, NULL, NULL);
 	WaitForSingleObject(hThread, INFINITE);
 
 	CloseHandle(hThread);
 	ResumeThread(pi.hThread);
 
-	VirtualFreeEx(pi.hProcess, lpFunction, dwFunctionSize, MEM_RELEASE);
-	VirtualFreeEx(pi.hProcess, lpParam, sizeof(param), MEM_RELEASE);
+	VirtualFreeEx(pi.hProcess, lpLibName, dwLength, MEM_RELEASE);
 
 	WaitForSingleObject(pi.hProcess, INFINITE);
 
