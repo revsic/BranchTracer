@@ -46,7 +46,7 @@ long WINAPI BranchHandler(PEXCEPTION_POINTERS ExceptionInfo) {
 					WCHAR wModuleName[MAX_FILE_PATH];
 					if (!GetModuleNameByAddr(called, wModuleName, MAX_FILE_PATH)) {
 						WCHAR wSymbolName[MAX_SYM_NAME];
-						if (!GetSymolName(called, wSymbolName, MAX_SYM_NAME)) {
+						if (!GetSymbolName(called, wSymbolName, MAX_SYM_NAME)) {
 							StringCbPrintfW(log, 
 											MAX_LOG_SIZE, 
 											L"+%p,%p,%s,%s\r\n", 

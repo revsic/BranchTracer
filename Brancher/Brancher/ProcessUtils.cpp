@@ -124,7 +124,7 @@ int GetModuleNameByAddr(CDWORD dwAddress, WCHAR *wName, SIZE_T size) {
 	return ret;
 }
 
-int GetSymolName(CDWORD called, WCHAR *name, SIZE_T size) {
+int GetSymbolName(CDWORD called, WCHAR *name, SIZE_T size) {
 	name[0] = '\0';
 	int ret = 1;
 
