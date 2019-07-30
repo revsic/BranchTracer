@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "RawlevelHelper.h"
 
+// RnM bit
 enum RnM { RegisterAx, RegisterCx, RegisterDx, RegisterBx, RegisterSp, RegisterBp, RegisterSi, RegisterDi };
 
+// Get destination address of branching operation.
 CDWORD GetBranchingAddress(BYTE *opc, PCONTEXT context, LPVOID *next) {
 	BYTE Mod = opc[1] >> 0x6; // high 2bits
 	BYTE Reg = (opc[1] >> 0x3) & 0x7; // mid 3bits
@@ -80,11 +82,12 @@ CDWORD GetBranchingAddress(BYTE *opc, PCONTEXT context, LPVOID *next) {
 	return called;
 }
 
+// Parse SIB from given context.
 CDWORD SIBParser(BYTE* opc, PCONTEXT context, SIBParseResult *result) {
 	BYTE SIB = opc[2];
-	BYTE Scale = SIB >> 0x6;
-	BYTE Index = (SIB >> 0x3) & 0x7;
-	BYTE Base = SIB & 0x7;
+	BYTE Scale = SIB >> 0x6; // high 2bits
+	BYTE Index = (SIB >> 0x3) & 0x7; // mid 3bits
+	BYTE Base = SIB & 0x7; // low 3bits
 
 	CDWORD called = NULL;
 	switch (Index) {
