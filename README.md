@@ -16,7 +16,7 @@ msbuild .\Brancher\Brancher.sln /p:configuration=Debug
 Make log file on C:\dbg
 ```
 mkdir C:\dbg
-echo "" > C:\dbg\log.txt    # branch tracer open existing log file not create new
+echo "" > C:\dbg\log.txt    # branch tracer open existing log file not creating new
 ```
 Default is debug mode and it will run internet explorer as sample.
 
