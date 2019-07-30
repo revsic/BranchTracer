@@ -2,8 +2,8 @@
 
 // Result of SIB parser
 struct SIBParseResult {
-	BYTE *opc;
-	CDWORD called;
+    BYTE *opc;
+    CDWORD called;
 };
 
 // Get destination address of branching operation.
