@@ -2,7 +2,7 @@
 
 Implementation of Branch Tracer with C++
 
-Branch data refers to the data processed in a branching situation such as jmp and call. This data is advantageous for showing the structure of binary regardless of the polymorphism. Branch tracer logs such branch data.
+Branch data refers to the metadata from the branching operation such as jmp and call. This data is advantageous for showing the structure of binary regardless of the machine code polymorphism. Branch tracer writes log about the branch data
 
 - Brancher DLL Main - Preprocessor :  [dllmain.cpp](https://github.com/revsic/BranchTracer/blob/master/Brancher/Brancher/dllmain.cpp)
 - Branch Logger - VEH Handler: [Brancher.cpp](https://github.com/revsic/BranchTracer/blob/master/Brancher/Brancher/Brancher.cpp)
