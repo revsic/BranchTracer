@@ -5,10 +5,10 @@ int main(int argc, char *argv[]) {
 #ifdef _DEBUG
     #ifdef _WIN64
         WCHAR *target = L"C:\\Program Files\\Internet Explorer\\iexplore.exe";
-        WCHAR *lib = L"Y:\\Desktop\\github\\BranchTracer\\Brancher\\x64\\Debug\\Brancher.dll";
+        WCHAR *lib = L"..\\x64\\Debug\\Brancher.dll";
     #else
         WCHAR *target = L"C:\\Program Files (x86)\\Internet Explorer\\iexplore.exe";
-        WCHAR *lib = L"Y:\\Desktop\\github\\BranchTracer\\Brancher\\x64\\Debug\\Brancher.dll";
+        WCHAR *lib = L"..\\Debug\\Brancher.dll";
     #endif
 #else
     WCHAR *target = L"C:\\dbg\\sample.exe";
